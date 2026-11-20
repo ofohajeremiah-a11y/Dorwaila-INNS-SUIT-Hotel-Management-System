@@ -1,8 +1,12 @@
 from datetime import datetime, timezone
+from pathlib import Path
+from datetime import datetime, timezone
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -25,6 +29,13 @@ from app.security import (
 )
 
 app = FastAPI(title="Dorwaila INN's & SUIT Hotel Management API", version="0.2.0")
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+app.mount(
+    "/static",
+    StaticFiles(directory=STATIC_DIR),
+    name="static"
+)
 Db = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(current_user)]
 AdminUser = Annotated[User, Depends(require_admin)]
@@ -52,7 +63,7 @@ def health():
 
 @app.get("/", include_in_schema=False)
 def root():
-    return {"message": "Dorwaila INN's & SUIT Hotel Management API is running", "docs": "/docs"}
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.post("/api/v1/auth/token")

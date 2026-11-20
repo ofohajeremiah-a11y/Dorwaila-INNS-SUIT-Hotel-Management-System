@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#102b46">
+    <title>Dorwaila INN's & SUIT | Hotel Management</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <!-- LOGIN PAGE -->
+    <main id="loginPage" class="login-page">
+        <section class="login-card">
+            <div class="brand-mark">D</div>
+
+            <h1>Dorwaila INN's & SUIT</h1>
+            <p class="login-subtitle">Hotel Management System</p>
+
+            <div id="loginMessage" class="message hidden"></div>
+
+            <form id="loginForm">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    autocomplete="username"
+                    required
+                >
+
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit" id="loginButton">
+                    Sign In
+                </button>
+            </form>
+
+            <p class="login-footer">
+                Secure access for authorised hotel staff.
+            </p>
+        </section>
+    </main>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboardPage" class="app-layout hidden">
+
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-mark small">D</div>
+                <div>
+                    <h2>Dorwaila INN's</h2>
+                    <span>& SUIT</span>
+                </div>
+            </div>
+
+            <div class="sidebar-user">
+                <div class="avatar" id="userAvatar">U</div>
+                <div>
+                    <strong id="sidebarUserName">Hotel Staff</strong>
+                    <small id="sidebarUserRole">Staff</small>
+                </div>
+            </div>
+
+            <nav class="navigation">
+                <p class="nav-heading">MAIN MENU</p>
+
+                <button class="nav-link active" data-section="overview">
+                    <span>▦</span> Overview
+                </button>
+
+                <button class="nav-link" data-section="rooms">
+                    <span>▤</span> Rooms
+                </button>
+
+                <button class="nav-link" data-section="reservations">
+                    <span>▣</span> Reservations
+                </button>
+
+                <button class="nav-link" data-section="payments">
+                    <span>₣</span> Payments
+                </button>
+
+                <button class="nav-link" data-section="expenses">
+                    <span>↗</span> Expenses
+                </button>
+
+                <button class="nav-link" data-section="attendance">
+                    <span>◷</span> Attendance
+                </button>
+
+                <button class="nav-link" data-section="activities">
+                    <span>☷</span> Department Activities
+                </button>
+
+                <div id="managerNavigation" class="hidden">
+                    <p class="nav-heading">MANAGEMENT</p>
+
+                    <button class="nav-link" data-section="employees">
+                        <span>♙</span> Staff Management
+                    </button>
+
+                    <button class="nav-link" data-section="reports">
+                        <span>▥</span> Reports
+                    </button>
+
+                    <button class="nav-link" data-section="audit">
+                        <span>◈</span> Audit Logs
+                    </button>
+                </div>
+            </nav>
+
+            <button id="logoutButton" class="logout-button">
+                ⇥ Sign Out
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <h1 id="pageTitle">Dashboard Overview</h1>
+                    <p>Welcome to Dorwaila INN's & SUIT Hotel Management.</p>
+                </div>
+
+                <div class="topbar-user">
+                    <span id="topbarUserName">Hotel Staff</span>
+                    <div class="avatar small-avatar" id="topbarAvatar">U</div>
+                </div>
+            </header>
+
+            <section id="contentArea" class="content-area">
+                <div class="welcome-panel">
+                    <div>
+                        <span class="eyebrow">HOTEL MANAGEMENT</span>
+                        <h2>Welcome back, <span id="welcomeName">User</span></h2>
+                        <p>
+                            Manage hotel operations, staff activities,
+                            reservations and financial records from one place.
+                        </p>
+                    </div>
+                    <div class="welcome-icon">🏨</div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <article class="stat-card">
+                        <div class="stat-icon">▤</div>
+                        <p>Total Rooms</p>
+                        <h3 id="totalRooms">—</h3>
+                        <small>Room records</small>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon">▣</div>
+                        <p>Reservations</p>
+                        <h3 id="totalReservations">—</h3>
+                        <small>Reservation records</small>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon">₣</div>
+                        <p>Payments</p>
+                        <h3 id="totalPayments">—</h3>
+                        <small>Payment records</small>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon">↗</div>
+                        <p>Expenses</p>
+                        <h3 id="totalExpenses">—</h3>
+                        <small>Expense records</small>
+                    </article>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>System Information</h3>
+                            <p>Your account and access information.</p>
+                        </div>
+                        <span class="status-badge">Connected</span>
+                    </div>
+
+                    <div class="information-grid">
+                        <div>
+                            <small>Full Name</small>
+                            <strong id="profileName">—</strong>
+                        </div>
+                        <div>
+                            <small>Email Address</small>
+                            <strong id="profileEmail">—</strong>
+                        </div>
+                        <div>
+                            <small>Department</small>
+                            <strong id="profileDepartment">—</strong>
+                        </div>
+                        <div>
+                            <small>Account Status</small>
+                            <strong id="profileStatus">—</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dashboardMessage" class="message hidden"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
