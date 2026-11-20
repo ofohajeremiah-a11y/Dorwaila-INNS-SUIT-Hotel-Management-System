@@ -1,26 +1,6 @@
-# Python
+.env
+.venv/
 __pycache__/
 *.py[cod]
-*.pyo
-.venv/
-venv/
-.env
-.env.*
-!.env.example
 *.db
-*.sqlite3
 
-# Editors / OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-
-# Build / test
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-dist/
-build/

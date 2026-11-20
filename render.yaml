@@ -4,13 +4,19 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r backend/requirements.txt
-    startCommand: cd backend && python -m app.init_db && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: cd backend && python -m app.init_db && python -m app.bootstrap_if_configured && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/v1/health
     envVars:
       - key: DATABASE_URL
-        sync: false
+        value: sqlite:///./dorwaila_demo.db
       - key: SECRET_KEY
         generateValue: true
+      - key: BOOTSTRAP_GM_EMAIL
+        sync: false
+      - key: BOOTSTRAP_GM_NAME
+        value: General Manager
+      - key: BOOTSTRAP_GM_PASSWORD
+        sync: false
       - key: ACCESS_TOKEN_MINUTES
         value: "30"
       - key: REPORTING_CURRENCY
