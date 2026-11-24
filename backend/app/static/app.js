@@ -523,6 +523,11 @@ async function loadSection(section) {
         return;
     }
 
+    if (section === "employees") {
+        await loadEmployeeManagement();
+        return;
+    }
+
     const endpoint = endpoints[section];
 
     if (!endpoint) {
@@ -612,6 +617,209 @@ function renderSection(section, data) {
             </div>
         </div>
     `;
+}
+
+// ==========================================
+// EMPLOYEE AND SHIFT MANAGEMENT (GENERAL MANAGER)
+// ==========================================
+
+const employeeDepartments = [
+    "admin_finance", "front_desk", "kitchen", "housekeeping",
+    "bar", "security", "storekeeping", "operations"
+];
+
+async function loadEmployeeManagement() {
+    const content = document.getElementById("contentArea");
+    try {
+        const [employees, shifts] = await Promise.all([
+            apiRequest("/manager/users"),
+            apiRequest("/attendance/shifts")
+        ]);
+        renderEmployeeManagement(employees, shifts);
+    } catch (error) {
+        showSectionError(error.message);
+    }
+}
+
+function renderEmployeeManagement(employees, shifts) {
+    const content = document.getElementById("contentArea");
+    const staff = employees.filter(person => !person.is_general_manager);
+    const departmentOptions = employeeDepartments.map(department =>
+        `<option value="${department}">${escapeHTML(formatLabel(department))}</option>`
+    ).join("");
+    const employeeOptions = staff.filter(person => person.is_active).map(person =>
+        `<option value="${person.id}">${escapeHTML(person.full_name)} — ${escapeHTML(formatLabel(person.department))}</option>`
+    ).join("");
+
+    const employeeRows = staff.map(person => `
+        <tr>
+            <td>${escapeHTML(person.full_name)}</td>
+            <td>${escapeHTML(person.email)}</td>
+            <td>${escapeHTML(formatLabel(person.department))}</td>
+            <td><span class="status-pill">${person.is_active ? "Active" : "Inactive"}</span></td>
+            <td>
+                <button class="btn-secondary staff-toggle" data-id="${person.id}" data-active="${person.is_active}">
+                    ${person.is_active ? "Deactivate" : "Activate"}
+                </button>
+            </td>
+        </tr>
+    `).join("");
+
+    const shiftRows = shifts.map(shift => {
+        const person = staff.find(item => item.id === shift.employee_id);
+        return `<tr>
+            <td>${escapeHTML(person ? person.full_name : "Staff member")}</td>
+            <td>${escapeHTML(formatLabel(shift.department))}</td>
+            <td>${escapeHTML(formatDate(shift.shift_start_at))}</td>
+            <td>${escapeHTML(formatDate(shift.shift_end_at))}</td>
+            <td>${escapeHTML(shift.notes || "—")}</td>
+        </tr>`;
+    }).join("");
+
+    content.innerHTML = `
+        <div class="panel staff-panel">
+            <div class="panel-header">
+                <div><h3>Create Staff Account</h3><p>Add a member of the hotel team.</p></div>
+            </div>
+            <form id="createStaffForm" class="staff-form">
+                <label>Full name<input name="full_name" required minlength="2" maxlength="160"></label>
+                <label>Email address<input name="email" type="email" required maxlength="320"></label>
+                <label>Temporary password<input name="password" type="password" required minlength="12" maxlength="256" autocomplete="new-password"><small>At least 12 characters. Share it securely and ask the employee to change it if your system supports password changes.</small></label>
+                <label>Department<select name="department" required>${departmentOptions}</select></label>
+                <label class="check-label"><input name="expense_approver" type="checkbox"> Can approve expenses (Admin &amp; Finance only)</label>
+                <button class="btn-primary" type="submit">Create Staff Account</button>
+                <p id="staffFormMessage" class="message hidden" role="status"></p>
+            </form>
+        </div>
+
+        <div class="panel staff-panel">
+            <div class="panel-header"><div><h3>Assign Staff Shift</h3><p>Schedule a shift for an active employee. Times use your device's local time.</p></div></div>
+            <form id="assignShiftForm" class="staff-form">
+                <label>Employee<select name="employee_id" required>${employeeOptions}</select></label>
+                <label>Shift type<select name="shift_type" id="shiftType">
+                    <option value="morning">Morning (06:00–14:00)</option>
+                    <option value="afternoon">Afternoon (14:00–22:00)</option>
+                    <option value="night">Night (22:00–06:00 next day)</option>
+                    <option value="custom">Custom times</option>
+                </select></label>
+                <label>Shift start<input name="shift_start" id="shiftStart" type="datetime-local" required></label>
+                <label>Shift end<input name="shift_end" id="shiftEnd" type="datetime-local" required></label>
+                <label>Notes (optional)<input name="notes" maxlength="2000" placeholder="e.g. Covering for another employee"></label>
+                <button class="btn-primary" type="submit" ${employeeOptions ? "" : "disabled"}>Assign Shift</button>
+                <p id="shiftFormMessage" class="message hidden" role="status"></p>
+            </form>
+        </div>
+
+        <div class="panel staff-panel">
+            <div class="panel-header"><div><h3>Staff Directory</h3><p>${staff.length} employee account(s).</p></div></div>
+            <div class="table-scroll"><table><thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Status</th><th>Account</th></tr></thead>
+            <tbody>${employeeRows || '<tr><td colspan="5">No staff accounts yet.</td></tr>'}</tbody></table></div>
+        </div>
+
+        <div class="panel staff-panel">
+            <div class="panel-header"><div><h3>Shift Schedule</h3><p>Recently scheduled shifts.</p></div></div>
+            <div class="table-scroll"><table><thead><tr><th>Employee</th><th>Department</th><th>Starts</th><th>Ends</th><th>Notes</th></tr></thead>
+            <tbody>${shiftRows || '<tr><td colspan="5">No shifts assigned yet.</td></tr>'}</tbody></table></div>
+        </div>
+    `;
+
+    const shiftType = document.getElementById("shiftType");
+    const startInput = document.getElementById("shiftStart");
+    const endInput = document.getElementById("shiftEnd");
+    const localInputValue = (date) => {
+        const pad = value => String(value).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+    const setPreset = () => {
+        if (shiftType.value === "custom") return;
+        const date = startInput.value ? new Date(startInput.value) : new Date();
+        if (!startInput.value) date.setMinutes(0, 0, 0);
+        const [startHour, endHour] = shiftType.value === "morning" ? [6, 14]
+            : shiftType.value === "afternoon" ? [14, 22] : [22, 6];
+        date.setHours(startHour, 0, 0, 0);
+        const end = new Date(date);
+        end.setHours(endHour, 0, 0, 0);
+        if (end <= date) end.setDate(end.getDate() + 1);
+        startInput.value = localInputValue(date);
+        endInput.value = localInputValue(end);
+    };
+    shiftType.addEventListener("change", setPreset);
+    startInput.addEventListener("change", () => {
+        if (shiftType.value !== "custom") setPreset();
+    });
+    setPreset();
+
+    document.getElementById("createStaffForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const message = document.getElementById("staffFormMessage");
+        const values = new FormData(form);
+        const department = values.get("department");
+        try {
+            await apiRequest("/manager/users", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    full_name: values.get("full_name").trim(),
+                    email: values.get("email").trim(),
+                    password: values.get("password"),
+                    department,
+                    expense_approver: values.get("expense_approver") === "on"
+                })
+            });
+            showMessage(message, "Staff account created successfully.", "success");
+            form.reset();
+            await loadEmployeeManagement();
+        } catch (error) {
+            showMessage(message, error.message);
+        }
+    });
+
+    document.getElementById("assignShiftForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const message = document.getElementById("shiftFormMessage");
+        const values = new FormData(form);
+        const start = new Date(values.get("shift_start"));
+        const end = new Date(values.get("shift_end"));
+        if (!values.get("employee_id")) {
+            showMessage(message, "Create a staff account before assigning a shift.");
+            return;
+        }
+        if (!(end > start)) {
+            showMessage(message, "Shift end must be later than shift start.");
+            return;
+        }
+        try {
+            await apiRequest("/attendance/shifts", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    employee_id: values.get("employee_id"),
+                    shift_start_at: start.toISOString(),
+                    shift_end_at: end.toISOString(),
+                    notes: values.get("notes") || null
+                })
+            });
+            showMessage(message, "Shift assigned successfully.", "success");
+            await loadEmployeeManagement();
+        } catch (error) {
+            showMessage(message, error.message);
+        }
+    });
+
+    content.querySelectorAll(".staff-toggle").forEach(button => {
+        button.addEventListener("click", async () => {
+            const action = button.dataset.active === "true" ? "disable" : "enable";
+            if (!confirm(`Are you sure you want to ${action} this staff account?`)) return;
+            try {
+                await apiRequest(`/manager/users/${button.dataset.id}/${action}`, {method: "PATCH"});
+                await loadEmployeeManagement();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    });
 }
 
 // ==========================================
